@@ -1,0 +1,96 @@
+Exécuter un serveur web (apache, nginx, …) dans un conteneur docker
+a. Récupérer l’image sur le Docker Hub
+
+$ docker pull nginx
+
+b. Vérifier que cette image est présente en local
+
+$ docker images
+
+c. Créer un fichier index.html simple
+
+$ mkdir nginx
+$ echo "<h1>Hello World</h1> 
+
+d. Démarrer un conteneur et servir la page html créée précédemment à l’aide d’un volume (option -v de docker run)
+
+$ cd nginx
+$ docker run -d --name nginx -p 80:80 -v $(pwd)/index.html:/usr/share/nginx/html/index.html  nginx
+
+e. Supprimer le conteneur précédent et arriver au même résultat que précédemment à l’aide de la commande docker cp
+
+$ docker rm -f nginx
+$ docker run --name nginx -d -p 80:80 nginx
+$ docker cp ./index.html nginx:/usr/share/nginx/html/index.html
+
+
+
+
+ Builder une image
+a. A l’aide d’un Dockerfile, créer une image (commande docker build)
+
+# On crée le Dockerfile dans le git
+$ docker build -t nginx-custom .
+
+b. Exécuter cette nouvelle image de manière à servir la page html (commande docker run)
+
+$ docker run --name nginx -d -p 80:80 nginx-custom 
+
+c. Quelles différences observez-vous entre les procédures 5. et 6. ? Avantages et inconvénients de l’une
+ et de l’autre méthode ? (Mettre en relation ce qui est observé avec ce qui a été présenté pendant le cours)
+ 
+Le docker build permet un déploiment entièrement automatisé du serveur web nginx en copiant dès le build de l'image le fichier index.html. Alors qu'avec la première méthode il fallait indiquer dans la commande run que l'on voulait copier l'index.html
+
+
+
+Utiliser une base de données dans un conteneur docker
+a. Récupérer les images mysql:5.7 et phpmyadmin depuis le Docker Hub
+
+$ docker pull mysql:5.7 && docker pull phpmyadmin/phpmyadmin
+
+b. Exécuter deux conteneurs à partir des images et ajouter une table ainsi que quelques enregistrements 
+dans la base de données à l’aide de phpmyadmin
+
+# On crée un docker network dans lequel on mettra les deux conteneurs pour qu'ils puissent communiquer entre eux
+
+$ docker network create tp
+
+# MySQL 5.7 ne marche pas (du moins pour moi) je passe à la version 8 de MySQL
+
+$ docker run -d --name mysql --network tp \     
+   -e MYSQL_ROOT_PASSWORD=monmotdepasse \
+   -e MYSQL_ROOT_HOST='%' \
+   --memory=1g \ # Je rajoute cette option car j'ai eu des plantages à cause de la RAM saturée
+   mysql:8
+
+
+# phpmyadmin
+
+$ docker run -d --name phpmyadmin --network tp \
+   -e PMA_HOST=mysql \
+   -e PMA_PORT=3306 \
+   -p 8080:80 \
+   phpmyadmin/phpmyadmin
+
+# En suite on se connecte à http://localhost:8080/ et après s'être identifié on peut créer graphiquement les entrées dans la base de données
+
+
+Faire la même chose que précédemment en utilisant un fichier docker-compose.yml
+a. Qu’apporte le fichier docker-compose par rapport aux commandes docker run ? Pourquoi est-il intéressant ? 
+(cf. ce qui a été présenté pendant le cours)
+
+
+
+b. Quel moyen permet de configurer (premier utilisateur, première base de données, mot de passe root, …)
+facilement le conteneur mysql au lancement ?
+
+
+
+9. Observation de l’isolation réseau entre 3 conteneurs
+a. A l’aide de docker-compose et de l’image praqma/network-multitool
+disponible sur le Docker Hub créer 3 services (web, app et db) et 2 réseaux (frontend et backend).
+Les services web et db ne devront pas pouvoir effectuer de ping de l’un vers l’autre
+b. Quelles lignes du résultat de la commande docker inspect justifient ce
+comportement ?
+c. Dans quelle situation réelles (avec quelles images) pourrait-on avoir cette
+configuration réseau ? Dans quel but 
