@@ -1,0 +1,22 @@
+version: '3.9'
+
+services:
+  web:
+    image: praqma/network-multitool
+    networks:
+      - frontend
+
+  app:
+    image: praqma/network-multitool
+    networks:
+      - frontend
+      - backend
+
+  db:
+    image: praqma/network-multitool
+    networks:
+      - backend
+
+networks:
+  frontend:
+  backend:

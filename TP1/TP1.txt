@@ -29,7 +29,7 @@ $ docker cp ./index.html nginx:/usr/share/nginx/html/index.html
  Builder une image
 a. A l’aide d’un Dockerfile, créer une image (commande docker build)
 
-# On crée le Dockerfile dans le git
+# On crée le Dockerfile dans le git, dossier TP1/Q5
 $ docker build -t nginx-custom .
 
 b. Exécuter cette nouvelle image de manière à servir la page html (commande docker run)
@@ -76,21 +76,77 @@ $ docker run -d --name phpmyadmin --network tp \
 
 
 Faire la même chose que précédemment en utilisant un fichier docker-compose.yml
+
+# Voir le docker-compose dans le dossier TP1/Q8
+
 a. Qu’apporte le fichier docker-compose par rapport aux commandes docker run ? Pourquoi est-il intéressant ? 
 (cf. ce qui a été présenté pendant le cours)
 
-
+Le fichier docker-compose permet de définir et lancer plusieurs conteneurs avec une seule commande, en centralisant la 
+configuration (ports, volumes, réseaux, variables) dans un fichier lisible. Cela simplifie l’orchestration, assure la 
+reproductibilité de l’environnement et facilite la maintenance par rapport à des commandes docker run manuelles, souvent 
+répétitives et sujettes à erreurs.
 
 b. Quel moyen permet de configurer (premier utilisateur, première base de données, mot de passe root, …)
 facilement le conteneur mysql au lancement ?
 
+Pour configurer facilement MySQL au lancement d’un conteneur, on utilise les variables d’environnement (comme 
+MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD) passées via Docker ou dans un fichier 
+docker-compose.yml, qui permettent d’automatiser la création du premier utilisateur, de la base et du mot de 
+passe root.
 
 
-9. Observation de l’isolation réseau entre 3 conteneurs
+Observation de l’isolation réseau entre 3 conteneurs
 a. A l’aide de docker-compose et de l’image praqma/network-multitool
 disponible sur le Docker Hub créer 3 services (web, app et db) et 2 réseaux (frontend et backend).
 Les services web et db ne devront pas pouvoir effectuer de ping de l’un vers l’autre
+
+# Voir le docker compose dans le dossier TP1/Q9 
+
 b. Quelles lignes du résultat de la commande docker inspect justifient ce
 comportement ?
+
+$ docker inspect q9-db-1
+
+"Networks": {
+	...
+    "q9_backend": {
+        ...
+    }
+}
+
+# Montre bien que le conteneur db est uniquement sur le réseau backend
+
+$ docker inspect q9-app-1
+
+"Networks": {
+	...
+    "q9_backend": {
+        ...
+    },
+    "q9_frontend": {
+    ...
+    }
+}
+
+# Le conteneur app est bien sur les deux réseaux
+
+$ docker inspect q9-web-1
+
+"Networks": {
+	"q9_frontend": {
+        	...
+        }
+}
+
+# Et le conteneur web est bien que en front end
+
 c. Dans quelle situation réelles (avec quelles images) pourrait-on avoir cette
 configuration réseau ? Dans quel but 
+
+Dans une architecture multi-niveaux (3-tier), on sépare les rôles entre un frontend (ex. nginx, apache) pour 
+l’interface utilisateur, un middleware (ex. Node.js, Django) pour la logique métier, et un backend (ex. 
+PostgreSQL, MySQL) pour les données. Le frontend communique uniquement avec le middleware via HTTP/HTTPS, 
+tandis que seul ce dernier accède à la base de données. Cette séparation permet d’isoler les composants pour 
+renforcer la sécurité, limiter la surface d’attaque, et assurer une organisation claire et modulaire du 
+système.
